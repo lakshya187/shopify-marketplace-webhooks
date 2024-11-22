@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "#common-functions/*": ["./common-functions/*"],
+      "#schemas/*": ["./schemas/*"],
+      "#controllers/*": ["./controllers/*"]
+    }
+  }
+}

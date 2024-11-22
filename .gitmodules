@@ -1,0 +1,6 @@
+[submodule "common-functions"]
+	path = common-functions
+	url = git@github.com:giftkart-ai-org/giftkart-common-functions.git
+[submodule "schemas"]
+	path = schemas
+	url = git@github.com:giftkart-ai-org/giftkart-schemas.git
