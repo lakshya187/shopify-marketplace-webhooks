@@ -8,35 +8,21 @@ const EVENT_CONTROLLER_MAPPER = {
 export const handler = async (event) => {
   logger("info", `Event: ${JSON.stringify(event)}`);
 
-  // Loop through message records
+  const { detail: record } = event;
 
-  // eslint-disable-next-line no-restricted-syntax
-  for (const record of event.Records) {
-    const body = JSON.parse(record.body);
+  const { metadata, payload } = record;
 
-    logger("info", `Body: ${JSON.stringify(body)}`);
+  const storeUrl = metadata["X-Shopify-Shop-Domain"];
+  const webhookTopic = metadata["X-Shopify-Topic"];
 
-    const {
-      detail: { metadata, payload },
-    } = body;
+  logger("info", `Store URL: ${storeUrl}`);
+  logger("info", `Webhook Topic: ${webhookTopic}`);
 
-    const storeUrl = metadata["X-Shopify-Shop-Domain"];
-    const webhookTopic = metadata["X-Shopify-Topic"];
-
-    logger("info", `Store URL: ${storeUrl}`);
-    logger("info", `Webhook Topic: ${webhookTopic}`);
-
-    if (!EVENT_CONTROLLER_MAPPER[webhookTopic]) {
-      logger("error", `No controller found for topic: ${webhookTopic}`);
-      // eslint-disable-next-line no-continue
-      continue;
-    }
-
-    const eventHandler = EVENT_CONTROLLER_MAPPER[webhookTopic];
-
-    // eslint-disable-next-line no-await-in-loop
-    await eventHandler(payload, metadata);
+  if (!EVENT_CONTROLLER_MAPPER[webhookTopic]) {
+    logger("error", `No controller found for topic: ${webhookTopic}`);
   }
+  const eventHandler = EVENT_CONTROLLER_MAPPER[webhookTopic];
+  await eventHandler(payload, metadata);
 
   const response = {
     statusCode: 200,
