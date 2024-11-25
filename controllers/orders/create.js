@@ -16,7 +16,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     const [store] = await Stores.find({
       storeUrl,
     }).lean();
-    console.log(store, "storererererererer");
 
     // check if exists or not with the shopify_id
     const [doesOrderExists] = await Orders.find({
