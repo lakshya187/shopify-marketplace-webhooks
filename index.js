@@ -20,6 +20,7 @@ export const handler = async (event) => {
 
   if (!EVENT_CONTROLLER_MAPPER[webhookTopic]) {
     logger("error", `No controller found for topic: ${webhookTopic}`);
+    return;
   }
   const eventHandler = EVENT_CONTROLLER_MAPPER[webhookTopic];
   await eventHandler(payload, metadata);

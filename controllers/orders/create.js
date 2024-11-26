@@ -13,14 +13,23 @@ export default async function OrderCreateEventHandler(payload, metadata) {
 
     const orderId = metadata["X-Shopify-Order-Id"];
     const storeUrl = metadata["X-Shopify-Shop-Domain"];
+
     const [store] = await Stores.find({
       storeUrl,
+      isActive: true,
+      isInternalStore: true,
     }).lean();
+
+    if (!store) {
+      logger("error", `[order-processing-lambda] Store not found ${storeUrl}`);
+      return;
+    }
 
     // check if exists or not with the shopify_id
     const [doesOrderExists] = await Orders.find({
       orderShopifyId: payload.admin_graphql_api_id,
     });
+
     if (!doesOrderExists) {
       // assuming, if the line items will be a single bundle, then take the first item of the line items and fetch the it from the database for validation
       const bundle = payload.line_items[0];
