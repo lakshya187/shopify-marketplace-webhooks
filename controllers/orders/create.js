@@ -3,6 +3,10 @@ import Bundles from "#schemas/bundles.js";
 import Orders from "#schemas/orders.js";
 import Users from "#schemas/users.js";
 import Stores from "#schemas/stores.js";
+import FetchProductDefaultVariant from "#common-functions/shopify/getProductDefaultVariant.js";
+import CreateDraftOrder from "#common-functions/shopify/createDraftOrder.js";
+import CompleteDraftOrder from "#common-functions/shopify/completeDraftOrder.js";
+import GetOrderFromDraftOrder from "#common-functions/shopify/getOrderFromDraftOrderId.js";
 
 export default async function OrderCreateEventHandler(payload, metadata) {
   try {
@@ -31,44 +35,115 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     });
 
     if (!doesOrderExists) {
-      // assuming, if the line items will be a single bundle, then take the first item of the line items and fetch the it from the database for validation
-      const bundle = payload.line_items[0];
-      if (!bundle) {
+      if (!payload?.line_items?.length) {
         logger("error", "No product exists");
         return;
       }
-      const productId = `gid://shopify/Product/${bundle.product_id}`;
-      const [doesBundleExists] = await Bundles.find({
-        shopifyProductId: productId,
-      }).lean();
+      let merchantAccessToken = "";
+      let merchantShopName = "";
+      const orderedBundles = [];
+      let merchantStoreId = "";
+      const lineItems = await Promise.all(
+        payload.line_items.map(async (item) => {
+          const lineItemProduct = `gid://shopify/Product/${item.product_id}`;
+          logger("info", `Shopify id of product : ${lineItemProduct}`);
+          const [doesBundleExists] = await Bundles.find({
+            shopifyProductId: lineItemProduct,
+          })
+            .populate("store")
+            .lean();
 
-      if (!doesBundleExists) {
-        logger("error", "The product is not a bundle.");
+          if (!doesBundleExists) {
+            logger("error", "The product is not a bundle.");
+            return;
+          }
+          merchantAccessToken = doesBundleExists.store.accessToken;
+          merchantShopName = doesBundleExists.store.shopName;
+          merchantStoreId = doesBundleExists.store._id;
+          orderedBundles.push({
+            bundle: doesBundleExists._id,
+            quantity: item.quantity,
+          });
+          const { id: defaultProductVarient } =
+            await FetchProductDefaultVariant({
+              accessToken: doesBundleExists.store.accessToken,
+              productId: doesBundleExists.metadata.vendorShopifyId,
+              shopName: doesBundleExists.store.shopName,
+            });
+          return {
+            variantId: defaultProductVarient,
+            quantity: item.quantity,
+          };
+        }),
+      );
+      if (!lineItems.length || !lineItems[0]?.variantId) {
+        logger("error", "Something is wrong with the line items");
         return;
       }
 
+      logger(
+        "info",
+        "Successfully build the line items for the order",
+        lineItems,
+      );
+
       const { customer } = payload;
-      const { shipping_address } = payload;
-      // if the line item exists in the database, build  objects forˀ orders, users.
-      const userObj = new Users({
-        name: customer?.name ?? "User name not found",
-        email: customer?.email ?? "Email not found",
-        contactNumber: customer.mobileNumber ?? "Mobile number not found",
-        address: {
-          pincode: shipping_address.pincode ?? "Pincode not found",
-          addressLineOne:
-            shipping_address.address_line_one ?? "Address line one not found",
-          addressLineTwo:
-            shipping_address.address_line_two ?? "Address line two not found",
-          country: shipping_address.country ?? "Country not found",
-          state: shipping_address.province ?? "State not found",
+      const { billing_address: shipping_address } = payload;
+      logger("info", "Customer details", customer);
+
+      const draftOrder = await CreateDraftOrder({
+        user: {
+          email: customer.email,
+          address: {
+            address1: shipping_address.address1,
+            city: shipping_address.city,
+            province: shipping_address.province,
+            country: shipping_address.country,
+            zip: shipping_address.zip,
+          },
         },
+        accessToken: merchantAccessToken,
+        shopName: merchantShopName,
+        lineItems,
       });
 
-      const user = await userObj.save();
+      logger("info", "Created the draftOrder", draftOrder);
+      const completedOrder = await CompleteDraftOrder({
+        accessToken: merchantAccessToken,
+        shopName: merchantShopName,
+        draftOrderId: draftOrder.id,
+      });
+      const merchantOrder = await GetOrderFromDraftOrder({
+        accessToken: merchantAccessToken,
+        shopName: merchantShopName,
+        draftOrderId: draftOrder.id,
+      });
+
+      logger("info", "Placed the order", completedOrder);
+      let user;
+      const [doesUserAlreadyExists] = await Users.find({
+        email: customer?.email,
+      });
+      if (doesUserAlreadyExists) {
+        user = doesUserAlreadyExists;
+      } else {
+        const userObj = new Users({
+          name: `${customer?.first_name} ${customer.last_name}`,
+          email: customer?.email,
+          contactNumber: customer.phone,
+          address: {
+            pincode: shipping_address.zip,
+            addressLineOne: shipping_address.address1,
+            addressLineTwo: shipping_address.address2,
+            country: shipping_address.country,
+            state: shipping_address.city,
+          },
+        });
+        user = await userObj.save();
+      }
       const orderObj = new Orders({
         amount: payload.current_subtotal_price,
-        bundle: doesBundleExists._id,
+        bundles: orderedBundles,
         createdAt: payload.created_at,
         currency: payload.currency,
         discount: payload.current_total_discounts,
@@ -78,10 +153,36 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         orderShopifyId: payload.admin_graphql_api_id,
         store: store._id,
       });
-      const order = await orderObj.save();
+
+      const merchantOrderObj = new Orders({
+        amount: payload.current_subtotal_price,
+        bundles: orderedBundles,
+        createdAt: payload.created_at,
+        currency: payload.currency,
+        discount: payload.current_total_discounts,
+        vendor: storeUrl,
+        status: "pending",
+        user: user._id,
+        orderShopifyId: merchantOrder.id,
+        store: merchantStoreId,
+      });
+
+      await Promise.all(
+        orderedBundles.map((b) => {
+          return Bundles.findOneAndUpdate(
+            { _id: b.bundle },
+            { $inc: { inventory: -b.quantity } },
+            { new: true },
+          );
+        }),
+      );
+
+      logger("info", "Successfully updated the inventory of the bundles");
+
+      await Promise.all([orderObj.save(), merchantOrderObj.save()]);
       logger(
         "info",
-        `[order-create-event-handler] Order created: ${order._id}`,
+        "Sucessfully placed the order on merchant and marketplace",
       );
     }
   } catch (error) {
