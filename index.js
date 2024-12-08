@@ -1,8 +1,9 @@
 import logger from "#common-functions/logger/index.js";
 import OrderCreateEventHandler from "#controllers/orders/create.js";
-
+import FulfillOrderEventHandler from "#controllers/orders/fulfill.js";
 const EVENT_CONTROLLER_MAPPER = {
   "orders/create": OrderCreateEventHandler,
+  "orders/fulfilled": FulfillOrderEventHandler,
 };
 
 export const handler = async (event) => {
