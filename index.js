@@ -1,9 +1,16 @@
 import logger from "#common-functions/logger/index.js";
 import OrderCreateEventHandler from "#controllers/orders/create.js";
 import FulfillOrderEventHandler from "#controllers/orders/fulfill.js";
+import ProductCreateEventHandler from "#controllers/products/create.js";
+import ProductUpdateEventHandler from "#controllers/products/update.js";
+import OrderPaidEventHandler from "#controllers/orders/paid.js";
+
 const EVENT_CONTROLLER_MAPPER = {
   "orders/create": OrderCreateEventHandler,
   "orders/fulfilled": FulfillOrderEventHandler,
+  "products/create": ProductCreateEventHandler,
+  "products/update": ProductUpdateEventHandler,
+  "orders/paid": OrderPaidEventHandler,
 };
 
 export const handler = async (event) => {
@@ -23,6 +30,7 @@ export const handler = async (event) => {
     logger("error", `No controller found for topic: ${webhookTopic}`);
     return;
   }
+  logger("info", `Controller found ${webhookTopic}`);
   const eventHandler = EVENT_CONTROLLER_MAPPER[webhookTopic];
   await eventHandler(payload, metadata);
 
