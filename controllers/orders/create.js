@@ -3,10 +3,12 @@ import Bundles from "#schemas/bundles.js";
 import Orders from "#schemas/orders.js";
 import Users from "#schemas/users.js";
 import Stores from "#schemas/stores.js";
-import FetchProductDefaultVariant from "#common-functions/shopify/getProductDefaultVariant.js";
-import CreateDraftOrder from "#common-functions/shopify/createDraftOrder.js";
-import CompleteDraftOrder from "#common-functions/shopify/completeDraftOrder.js";
-import GetOrderFromDraftOrder from "#common-functions/shopify/getOrderFromDraftOrderId.js";
+import executeShopifyQueries from "#common-functions/shopify/execute.js";
+import {
+  CREATE_DRAFT_ORDER,
+  DRAFT_ORDER_COMPLETE,
+  GET_ORDER_ID_FROM_DRAFT_ORDER,
+} from "#common-functions/shopify/queries.js";
 
 export default async function OrderCreateEventHandler(payload, metadata) {
   try {
@@ -15,7 +17,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       `[order-create-event-handler] Processing order: ${JSON.stringify(metadata["X-Shopify-Order-Id"])}`,
     );
 
-    const orderId = metadata["X-Shopify-Order-Id"];
     const storeUrl = metadata["X-Shopify-Shop-Domain"];
     // fetching the market place
     const [store] = await Stores.find({
@@ -72,15 +73,15 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     }
 
     const noteObj = {};
-    const isGiftWrappingEnabled = noteAttributes.find(
-      (a) => a.name === "gift-wrapping",
-    );
+    // const isGiftWrappingEnabled = noteAttributes.find(
+    //   (a) => a.name === "gift-wrapping",
+    // );
     if (payload.note) {
       noteObj["note"] = payload.note;
     }
-    if (isGiftWrappingEnabled) {
-      noteObj["note"] = `${noteObj["note"] ?? ""} (wrap this order.)`.trim();
-    }
+    // if (isGiftWrappingEnabled) {
+    //   noteObj["note"] = `${noteObj["note"] ?? ""} (wrap this order.)`.trim();
+    // }
 
     // upserting the user
     if (doesUserAlreadyExists) {
@@ -135,55 +136,93 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         bundle: doesBundleExists._id,
         quantity: item.quantity,
       });
-      const { id: defaultProductVarient } = await FetchProductDefaultVariant({
-        accessToken: doesBundleExists.store.accessToken,
-        productId: doesBundleExists.metadata.vendorShopifyId,
-        shopName: doesBundleExists.store.shopName,
-        storeUrl: doesBundleExists.store.storeUrl,
-      });
+      let variantId =
+        doesBundleExists.metadata.variantMapping[
+          `gid://shopify/ProductVariant/${item.variant_id}`
+        ]?.id;
+
       merchantOrderMap[doesBundleExists.store.shopName].lineItems.push({
-        variantId: defaultProductVarient,
+        variantId,
         quantity: item.quantity,
       });
     }
     // creating orders for each merchant
     const orderObjs = Object.values(merchantOrderMap);
     for (const order of orderObjs) {
-      const draftOrder = await CreateDraftOrder({
-        user: {
-          email: customer.email,
-          address: {
-            address1: shipping_address.address1,
-            city: shipping_address.city,
-            province: shipping_address.province,
-            country: shipping_address.country,
-            zip: shipping_address.zip,
+      let draftOrder;
+      try {
+        draftOrder = await executeShopifyQueries({
+          accessToken: order.accessToken,
+          storeUrl: order.storeUrl,
+          query: CREATE_DRAFT_ORDER,
+          callback: (result) => {
+            return result.data.draftOrderCreate.draftOrder;
           },
-        },
-        note: noteObj,
-        accessToken: order.accessToken,
-        shopName: order.shopName,
-        lineItems: order.lineItems,
-        storeUrl: order.storeUrl,
-        metafields: merchantMetafields,
-        tags: {
-          tags: "generated_via_giftclub",
-        },
-      });
-      logger("info", "Created the draftOrder");
-      const completedOrder = await CompleteDraftOrder({
-        accessToken: order.accessToken,
-        shopName: order.shopName,
-        draftOrderId: draftOrder.id,
-        storeUrl: order.storeUrl,
-        paymentPending: payload.financial_status === "paid" ? false : true,
-      });
-      const merchantOrder = await GetOrderFromDraftOrder({
-        accessToken: order.accessToken,
-        shopName: order.shopName,
-        draftOrderId: draftOrder.id,
-        storeUrl: order.storeUrl,
-      });
+          variables: {
+            input: {
+              lineItems: order.lineItems,
+              email: customer.email,
+              shippingAddress: {
+                address1: shipping_address.address1,
+                city: shipping_address.city,
+                province: shipping_address.province,
+                country: shipping_address.country,
+                zip: shipping_address.zip,
+              },
+              tags: "generated_via_giftclub",
+              ...noteObj,
+              ...merchantMetafields,
+            },
+          },
+        });
+        logger("info", "Created the draftOrder");
+      } catch (e) {
+        logger(
+          "error",
+          "[order-create-event-handler] Could not create the draft order.",
+          e,
+        );
+        return;
+      }
+      try {
+        await executeShopifyQueries({
+          accessToken: order.accessToken,
+          storeUrl: order.storeUrl,
+          query: DRAFT_ORDER_COMPLETE,
+          callback: null,
+          variables: {
+            id: draftOrder.id,
+            paymentPending: payload.financial_status === "paid" ? false : true,
+          },
+        });
+      } catch (e) {
+        logger(
+          "error",
+          "[order-created-event-handler] Could not confirm the draft order",
+          e,
+        );
+      }
+      let merchantOrder;
+      try {
+        merchantOrder = await executeShopifyQueries({
+          accessToken: order.accessToken,
+          storeUrl: order.storeUrl,
+          variables: {
+            draftOrderId: draftOrder.id,
+          },
+          query: GET_ORDER_ID_FROM_DRAFT_ORDER,
+          callback: (result) => {
+            return result.data.draftOrder.order;
+          },
+        });
+        logger("info", "Successfully fetched the merchant order");
+      } catch (e) {
+        logger(
+          "error",
+          "[order-create-event-handler] Could not fetch the merchant order",
+          e,
+        );
+      }
 
       logger("info", "Placed the order");
       const merchantOrderObj = new Orders({

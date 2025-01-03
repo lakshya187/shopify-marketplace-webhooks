@@ -1,5 +1,6 @@
 import logger from "#common-functions/logger/index.js";
-import GetSingleProduct from "#common-functions/shopify/getSingleProduct.js";
+import executeShopifyQueries from "#common-functions/shopify/execute.js";
+import { GET_PRODUCT_DETAILS } from "#common-functions/shopify/queries.js";
 import Products from "#schemas/products.js";
 import Stores from "#schemas/stores.js";
 
@@ -25,19 +26,63 @@ export default async function ProductCreateEventHandler(payload, metadata) {
       return;
     }
     const productId = payload.admin_graphql_api_id;
-    const productDetails = await GetSingleProduct({
-      accessToken: store.accessToken,
-      productId,
-      shopName: store.shopName,
-      storeUrl: store.storeUrl,
-    });
-    if (!productDetails) {
+    let productDetails;
+    try {
+      productDetails = await executeShopifyQueries({
+        accessToken: store.accessToken,
+        storeUrl: store.storeUrl,
+        query: GET_PRODUCT_DETAILS,
+        variables: {
+          id: productId,
+        },
+        callback: (result) => {
+          const product = result?.data?.product;
+          return {
+            id: product.id,
+            title: product.title,
+            description: product.description,
+            bodyHtml: product.bodyHtml,
+            createdAt: product.createdAt,
+            updatedAt: product.updatedAt,
+            handle: product.handle,
+            vendor: product.vendor,
+            productType: product.productType,
+            tags: product.tags,
+            totalInventory: product.totalInventory,
+            totalVariants: product.totalVariants,
+            onlineStoreUrl: product.onlineStoreUrl,
+            images: product.images.edges.map(({ node }) => ({
+              src: node.src,
+              altText: node.altText || null,
+            })),
+            variants: product.variants.edges.map(({ node }) => ({
+              id: node.id,
+              title: node.title,
+              price: node.price,
+              sku: node.sku,
+              inventoryQuantity: node.inventoryQuantity || 0,
+            })),
+            metafields: product.metafields.edges.map(({ node }) => {
+              return {
+                id: node.id,
+                namespace: node.namespace,
+                key: node.key,
+                value: node.value,
+                description: node.value,
+              };
+            }),
+          };
+        },
+      });
+      logger("info", "Successfully fetched the product details");
+    } catch (e) {
       logger(
         "error",
-        "Could not fetch the details of the newly created product",
+        "[product-create-handler] could not fetch the product details",
       );
       return;
     }
+
     let totalInventory = 0;
     if (productDetails?.variants?.length) {
       productDetails.variants.forEach((v) => {

@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "prepare": "husky install",
-    "package": "zip -r lambda.zip ."
+    "package": "zip -r lambda.zip .",
+    "test": "nodemon --inspect ./test/index.js"
   },
   "dependencies": {
     "@sentry/node": "^7.86.0",

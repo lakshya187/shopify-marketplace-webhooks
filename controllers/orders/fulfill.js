@@ -1,6 +1,9 @@
 import logger from "#common-functions/logger/index.js";
-import CreateFulfillment from "#common-functions/shopify/createFulfillment.js";
-import GetOrderFulfillmentId from "#common-functions/shopify/getOrderFulfillmentId.js";
+import executeShopifyQueries from "#common-functions/shopify/execute.js";
+import {
+  FULFILLMENT_CREATE,
+  GET_ORDER_FULFILLMENT_ID,
+} from "#common-functions/shopify/queries.js";
 import Orders from "#schemas/orders.js";
 import Stores from "#schemas/stores.js";
 
@@ -24,7 +27,10 @@ export default async function OrderFulfillHandler(payload, metadata) {
     }).lean();
 
     if (!store) {
-      logger("error", `[order-processing-lambda] Store not found ${storeUrl}`);
+      logger(
+        "error",
+        `[order-fulfillment-handler] Store not found ${storeUrl}`,
+      );
       return;
     }
 
@@ -33,10 +39,13 @@ export default async function OrderFulfillHandler(payload, metadata) {
       orderShopifyId: payload.admin_graphql_api_id,
     }).lean();
 
-    // assuming the first object in the fullmint array is the order fullfilled
+    // assuming the first object in the fulfillment array is the order fulfilled
     const fulfillment = payload.fulfillments[0];
     if (!doesOrderExists) {
-      logger("error", "Order not placed on the marketplace");
+      logger(
+        "error",
+        "[order-fulfillment-handler] Order not placed on the marketplace",
+      );
       return;
     }
 
@@ -47,11 +56,29 @@ export default async function OrderFulfillHandler(payload, metadata) {
     if (fulfillment) {
       trackingUrl = fulfillment.tracking_url;
     }
-    const fulfillmentOrderId = await GetOrderFulfillmentId({
-      accessToken: marketPlace.accessToken,
-      orderId: marketplaceOrderId,
-      storeUrl: marketPlace.storeUrl,
-    });
+
+    let fulfillmentOrderId;
+    try {
+      fulfillmentOrderId = await executeShopifyQueries({
+        accessToken: marketPlace.accessToken,
+        callback: (result) => {
+          return result.data.fulfillmentCreate.fulfillment.id;
+        },
+        query: GET_ORDER_FULFILLMENT_ID,
+        storeUrl: marketPlace.storeUrl,
+        variables: {
+          orderId: marketplaceOrderId,
+        },
+      });
+      logger("info", "Successfully fetched the order fulfillment id");
+    } catch (e) {
+      logger(
+        "error",
+        "[order-fulfillment-handler] Could not find the order fulfillment id",
+        e,
+      );
+      return;
+    }
     const trackingInfo = {};
     if (fulfillment.tracking_company) {
       trackingInfo.company = fulfillment.tracking_company;
@@ -73,13 +100,26 @@ export default async function OrderFulfillHandler(payload, metadata) {
         ...trackingInfo,
       },
     };
+    try {
+      await executeShopifyQueries({
+        accessToken: marketPlace.accessToken,
+        storeUrl: marketPlace.storeUrl,
+        callback: null,
+        query: FULFILLMENT_CREATE,
+        variables: {
+          fulfillment: fulfillmentObj,
+        },
+      });
+    } catch (e) {
+      logger(
+        "error",
+        "[order-fulfillment-handler] Could not fulfill the order",
+        e,
+      );
+      return;
+    }
 
     await Promise.all([
-      CreateFulfillment({
-        accessToken: marketPlace.accessToken,
-        fulfillment: fulfillmentObj,
-        storeUrl: marketPlace.storeUrl,
-      }),
       Orders.findOneAndUpdate(
         { orderShopifyId: marketplaceOrderId },
         {

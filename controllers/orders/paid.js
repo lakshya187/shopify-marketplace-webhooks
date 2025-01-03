@@ -1,6 +1,6 @@
 import logger from "#common-functions/logger/index.js";
-import CreateFulfillment from "#common-functions/shopify/createFulfillment.js";
-import MarkOrderPaid from "#common-functions/shopify/markOrderPaid.js";
+import executeShopifyQueries from "#common-functions/shopify/execute.js";
+import { ORDER_MARK_AS_PAID } from "#common-functions/shopify/queries.js";
 import Orders from "#schemas/orders.js";
 import Stores from "#schemas/stores.js";
 
@@ -8,7 +8,7 @@ export default async function OrderPaidHandler(payload, metadata) {
   try {
     logger(
       "info",
-      `[order-paid-event-handler] Processing order: ${JSON.stringify(metadata["X-Shopify-Order-Id"])}`,
+      `[order-paid-handler] Processing order: ${JSON.stringify(metadata["X-Shopify-Order-Id"])}`,
     );
 
     const orderId = metadata["X-Shopify-Order-Id"];
@@ -24,7 +24,7 @@ export default async function OrderPaidHandler(payload, metadata) {
     }).lean();
 
     if (!store) {
-      logger("error", `[order-processing-lambda] Store not found ${storeUrl}`);
+      logger("error", `[order-paid-handler] Store not found ${storeUrl}`);
       return;
     }
 
@@ -33,20 +33,38 @@ export default async function OrderPaidHandler(payload, metadata) {
       orderShopifyId: payload.admin_graphql_api_id,
     }).lean();
     if (!doesOrderExists) {
-      logger("info", "The order is not placed through Marketplace");
+      logger(
+        "error",
+        "[order-paid-handler] The order is not placed through Marketplace",
+      );
       return;
     }
     const { marketplaceOrderId } = doesOrderExists.metaData;
     if (!marketplaceOrderId) {
-      logger("error", "The marketplace order id does not exists on the order.");
+      logger(
+        "error",
+        "[order-paid-handler] The marketplace order id does not exists on the order.",
+      );
+      return;
+    }
+    try {
+      await executeShopifyQueries({
+        accessToken: marketPlace.accessToken,
+        storeUrl: marketPlace.storeUrl,
+        query: ORDER_MARK_AS_PAID,
+        callback: null,
+        variables: {
+          input: {
+            id: marketplaceOrderId,
+          },
+        },
+      });
+      logger("info", "Successfully marked the order as paid.");
+    } catch (e) {
+      logger("error", "[order-paid-handler] could not mark the order paid", e);
       return;
     }
 
-    const marketplaceShopifyUpdate = MarkOrderPaid({
-      accessToken: marketPlace.accessToken,
-      storeUrl: marketPlace.storeUrl,
-      orderId: marketplaceOrderId,
-    });
     const merchantUpdate = Orders.findByIdAndUpdate(doesOrderExists._id, {
       paymentStatus: "paid",
     });
@@ -58,12 +76,8 @@ export default async function OrderPaidHandler(payload, metadata) {
         paymentStatus: "paid",
       },
     );
-    await Promise.all([
-      marketplaceShopifyUpdate,
-      merchantUpdate,
-      marketplaceUpdate,
-    ]);
+    await Promise.all([merchantUpdate, marketplaceUpdate]);
   } catch (error) {
-    logger("error", `[order-fulfill-event-handler] Error: ${error.message}`);
+    logger("error", `[order-paid-handler] Error: ${error.message}`);
   }
 }
