@@ -1,5 +1,6 @@
 import logger from "#common-functions/logger/index.js";
-import GetSingleProduct from "#common-functions/shopify/getSingleProduct.js";
+import executeShopifyQueries from "#common-functions/shopify/execute.js";
+import { GET_PRODUCT_DETAILS } from "#common-functions/shopify/queries.js";
 import Products from "#schemas/products.js";
 import Stores from "#schemas/stores.js";
 
@@ -7,7 +8,7 @@ export default async function ProductCreateEventHandler(payload, metadata) {
   try {
     logger(
       "info",
-      `[product-update-event-handler] Processing product: ${JSON.stringify(metadata["X-Shopify-Product-Id"])}`,
+      `[product-update-handler] Processing product: ${JSON.stringify(metadata["X-Shopify-Product-Id"])}`,
     );
 
     const storeUrl = metadata["X-Shopify-Shop-Domain"];
@@ -25,17 +26,71 @@ export default async function ProductCreateEventHandler(payload, metadata) {
       return;
     }
     const productId = payload.admin_graphql_api_id;
-    const productDetails = await GetSingleProduct({
-      accessToken: store.accessToken,
-      productId,
-      shopName: store.shopName,
-      storeUrl: store.storeUrl,
-    });
+    let productDetails;
+    try {
+      productDetails = await executeShopifyQueries({
+        accessToken: store.accessToken,
+        storeUrl: store.storeUrl,
+        query: GET_PRODUCT_DETAILS,
+        variables: {
+          id: productId,
+        },
+        callback: (result) => {
+          const product = result?.data?.product;
+          return {
+            id: product.id,
+            title: product.title,
+            description: product.description,
+            bodyHtml: product.bodyHtml,
+            createdAt: product.createdAt,
+            updatedAt: product.updatedAt,
+            handle: product.handle,
+            vendor: product.vendor,
+            productType: product.productType,
+            tags: product.tags,
+            totalInventory: product.totalInventory,
+            totalVariants: product.totalVariants,
+            onlineStoreUrl: product.onlineStoreUrl,
+            images: product.images.edges.map(({ node }) => ({
+              src: node.src,
+              altText: node.altText || null,
+            })),
+            variants: product.variants.edges.map(({ node }) => ({
+              id: node.id,
+              title: node.title,
+              price: node.price,
+              sku: node.sku,
+              inventoryQuantity: node.inventoryQuantity || 0,
+            })),
+            metafields: product.metafields.edges.map(({ node }) => {
+              return {
+                id: node.id,
+                namespace: node.namespace,
+                key: node.key,
+                value: node.value,
+                description: node.value,
+              };
+            }),
+          };
+        },
+      });
+      logger(
+        "info",
+        "[product-create-handler] Successfully fetched the product details",
+      );
+    } catch (e) {
+      logger(
+        "error",
+        "[product-update-handler] Successfully fetched the product details.",
+        e,
+      );
+      return;
+    }
 
     if (!productDetails) {
       logger(
         "error",
-        "Could not fetch the details of the newly created product",
+        "[product-update-handler] Could not fetch the details of the newly created product",
       );
       return;
     }
@@ -51,7 +106,7 @@ export default async function ProductCreateEventHandler(payload, metadata) {
     if (!doesProductExists) {
       logger(
         "info",
-        "Product does not exists in the database, creating new product...",
+        "[product-update-handler] Product does not exists in the database, creating new product...",
       );
       const product = new Products({
         bodyHtml: productDetails.bodyHtml,
@@ -99,6 +154,6 @@ export default async function ProductCreateEventHandler(payload, metadata) {
       await Products.findByIdAndUpdate(doesProductExists._id, productUpdateObj);
     }
   } catch (error) {
-    logger("error", `[product-update-event-handler] Error: ${error.message}`);
+    logger("error", `[product-update-handler] Error: ${error.message}`);
   }
 }
