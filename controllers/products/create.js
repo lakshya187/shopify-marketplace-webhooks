@@ -27,6 +27,14 @@ export default async function ProductCreateEventHandler(payload, metadata) {
     }
     const productId = payload.admin_graphql_api_id;
     let productDetails;
+    const isProductAlreadyCreated = await Products.find({
+      productId,
+    });
+    if (isProductAlreadyCreated && isProductAlreadyCreated.length) {
+      logger("info", "product already exists in the database");
+      return;
+    }
+
     try {
       productDetails = await executeShopifyQueries({
         accessToken: store.accessToken,
@@ -55,6 +63,8 @@ export default async function ProductCreateEventHandler(payload, metadata) {
               src: node.src,
               altText: node.altText || null,
             })),
+            status: product.status,
+            options: product.options,
             variants: product.variants.edges.map(({ node }) => ({
               id: node.id,
               title: node.title,
@@ -89,6 +99,10 @@ export default async function ProductCreateEventHandler(payload, metadata) {
         totalInventory += v.inventoryQuantity;
       });
     }
+    if (productDetails.status === "DRAFT") {
+      logger("info", "Not creating the product because its in draft state.");
+      return;
+    }
     const product = new Products({
       bodyHtml: productDetails.bodyHtml,
       createdAt: productDetails.createdAt,
@@ -108,6 +122,7 @@ export default async function ProductCreateEventHandler(payload, metadata) {
       totalVariants: productDetails.variants?.length,
       totalInventory,
       productType: productDetails.productType,
+      options: productDetails.options,
     });
     await product.save();
   } catch (error) {

@@ -55,6 +55,8 @@ export default async function ProductCreateEventHandler(payload, metadata) {
               src: node.src,
               altText: node.altText || null,
             })),
+            status: product.status,
+            options: product.options,
             variants: product.variants.edges.map(({ node }) => ({
               id: node.id,
               title: node.title,
@@ -103,33 +105,7 @@ export default async function ProductCreateEventHandler(payload, metadata) {
     }
 
     const [doesProductExists] = await Products.find({ productId: productId });
-    if (!doesProductExists) {
-      logger(
-        "info",
-        "[product-update-handler] Product does not exists in the database, creating new product...",
-      );
-      const product = new Products({
-        bodyHtml: productDetails.bodyHtml,
-        createdAt: productDetails.createdAt,
-        customProductType: productDetails.customProductType,
-        description: productDetails.description,
-        descriptionHtml: productDetails.descriptionHtml,
-        handle: productDetails.handle,
-        images: productDetails.images,
-        onlineStoreUrl: productDetails.onlineStoreUrl,
-        productId,
-        tags: productDetails.tags,
-        vendor: productDetails.vendor,
-        store: store._id,
-        title: productDetails.title,
-        variants: productDetails.variants,
-        updatedAt: productDetails.updatedAt,
-        totalVariants: productDetails.variants?.length,
-        totalInventory,
-        productType: productDetails.productType,
-      });
-      await product.save();
-    } else {
+    if (doesProductExists) {
       logger("info", "Product found, updating the product");
       const productUpdateObj = {
         bodyHtml: productDetails.bodyHtml,
@@ -150,6 +126,7 @@ export default async function ProductCreateEventHandler(payload, metadata) {
         totalVariants: productDetails.variants?.length,
         totalInventory,
         productType: productDetails.productType,
+        options: productDetails.options,
       };
       await Products.findByIdAndUpdate(doesProductExists._id, productUpdateObj);
     }

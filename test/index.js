@@ -1,5 +1,10 @@
 import { handler } from "../index.js";
-import { ORDER_CREATE_PAYLOAD } from "./testPayloads.js";
+import {
+  CREATE_PRODUCT,
+  ORDER_CREATE_PAYLOAD,
+  ORDER_FULFILLED,
+  PRODUCT_UPDATE,
+} from "./testPayloads.js";
 
 (async () => {
   try {

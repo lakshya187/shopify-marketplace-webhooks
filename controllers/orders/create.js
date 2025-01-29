@@ -2,13 +2,12 @@ import logger from "#common-functions/logger/index.js";
 import Bundles from "#schemas/bundles.js";
 import Orders from "#schemas/orders.js";
 import Users from "#schemas/users.js";
+import Boxes from "#schemas/boxes.js";
 import Stores from "#schemas/stores.js";
+import StoreBoxes from "#schemas/storeBoxes.js";
 import executeShopifyQueries from "#common-functions/shopify/execute.js";
-import {
-  CREATE_DRAFT_ORDER,
-  DRAFT_ORDER_COMPLETE,
-  GET_ORDER_ID_FROM_DRAFT_ORDER,
-} from "#common-functions/shopify/queries.js";
+import { GET_PRODUCT_USING_VARIANT_ID } from "#common-functions/shopify/queries.js";
+import { CreateOrder, CreateProduct } from "../../helpers/orders/index.js";
 
 export default async function OrderCreateEventHandler(payload, metadata) {
   try {
@@ -16,7 +15,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       "info",
       `[order-create-event-handler] Processing order: ${JSON.stringify(metadata["X-Shopify-Order-Id"])}`,
     );
-
     const storeUrl = metadata["X-Shopify-Shop-Domain"];
     // fetching the market place
     const [store] = await Stores.find({
@@ -24,7 +22,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       isActive: true,
       isInternalStore: true,
     }).lean();
-
     if (!store) {
       logger(
         "error",
@@ -32,7 +29,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       );
       return;
     }
-
     // check if order exists or not with the shopify_id
     const [doesOrderExists] = await Orders.find({
       orderShopifyId: payload.admin_graphql_api_id,
@@ -52,36 +48,10 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     const { customer } = payload;
     const { billing_address: shipping_address } = payload;
     let user;
-    logger("info", "Customer details", customer);
 
     const [doesUserAlreadyExists] = await Users.find({
       email: customer?.email,
     });
-    // creating a merhchant attributes to store the notes_attributes
-    const { note_attributes: noteAttributes } = payload;
-    const merchantMetafields = {};
-    if (noteAttributes?.length) {
-      merchantMetafields["metafields"] = [];
-      noteAttributes.forEach((n) => {
-        merchantMetafields["metafields"].push({
-          namespace: "gifting",
-          key: n?.name,
-          type: "single_line_text_field",
-          value: n?.value,
-        });
-      });
-    }
-
-    const noteObj = {};
-    // const isGiftWrappingEnabled = noteAttributes.find(
-    //   (a) => a.name === "gift-wrapping",
-    // );
-    if (payload.note) {
-      noteObj["note"] = payload.note;
-    }
-    // if (isGiftWrappingEnabled) {
-    //   noteObj["note"] = `${noteObj["note"] ?? ""} (wrap this order.)`.trim();
-    // }
 
     // upserting the user
     if (doesUserAlreadyExists) {
@@ -102,7 +72,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       user = await userObj.save();
     }
     // iterating over each item of the line items to create a map of individual merchants and creating order bundles for the particuller order
-    const orderedBundles = [];
     const merchantOrderMap = {};
     for (const item of payload.line_items) {
       const lineItemProduct = `gid://shopify/Product/${item.product_id}`;
@@ -111,7 +80,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       })
         .populate("store")
         .lean();
-
       if (!doesBundleExists) {
         logger("error", "The product is not a bundle.");
         continue;
@@ -120,7 +88,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         logger("error", "The bundles does not belong to a store");
         return;
       }
-
       if (!merchantOrderMap[doesBundleExists.store.shopName]) {
         merchantOrderMap[doesBundleExists.store.shopName] = {
           shopName: doesBundleExists.store.shopName,
@@ -136,93 +103,147 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         bundle: doesBundleExists._id,
         quantity: item.quantity,
       });
-      let variantId =
-        doesBundleExists.metadata.variantMapping[
-          `gid://shopify/ProductVariant/${item.variant_id}`
-        ]?.id;
-
       merchantOrderMap[doesBundleExists.store.shopName].lineItems.push({
-        variantId,
+        variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
         quantity: item.quantity,
       });
     }
     // creating orders for each merchant
+
     const orderObjs = Object.values(merchantOrderMap);
     for (const order of orderObjs) {
-      let draftOrder;
-      try {
-        draftOrder = await executeShopifyQueries({
-          accessToken: order.accessToken,
-          storeUrl: order.storeUrl,
-          query: CREATE_DRAFT_ORDER,
-          callback: (result) => {
-            return result.data.draftOrderCreate.draftOrder;
-          },
-          variables: {
-            input: {
-              lineItems: order.lineItems,
-              email: customer.email,
-              shippingAddress: {
-                address1: shipping_address.address1,
-                city: shipping_address.city,
-                province: shipping_address.province,
-                country: shipping_address.country,
-                zip: shipping_address.zip,
-              },
-              tags: "generated_via_giftclub",
-              ...noteObj,
-              ...merchantMetafields,
+      const storeInventory = await StoreBoxes.findOne({
+        store: order.storeId,
+      }).lean();
+      // const storeInventory = await StoreBoxes.findOne({
+      //   store: order.storeId,
+      // }).lean();
+      const orderLineItems = [];
+
+      for (const lineItem of order.lineItems) {
+        const { variantId, quantity } = lineItem;
+        // const variantProduct = await
+        let variantProduct;
+        try {
+          variantProduct = await executeShopifyQueries({
+            accessToken: store.accessToken,
+            storeUrl: store.storeUrl,
+            query: GET_PRODUCT_USING_VARIANT_ID,
+            variables: {
+              variantId,
             },
-          },
-        });
-        logger("info", "Created the draftOrder");
-      } catch (e) {
-        logger(
-          "error",
-          "[order-create-event-handler] Could not create the draft order.",
-          e,
-        );
-        return;
+            callback: (result) => {
+              const variant = result.data?.productVariant;
+
+              // Extracting price
+              const { id, price, title } = variant;
+              // Extracting the metafield with namespace "custom" and key "parent_product_details" to check if this is a packaging variant
+              const metafield = variant.product?.metafields?.edges.find(
+                (edge) =>
+                  edge.node.namespace === "custom" &&
+                  edge.node.key === "original_product",
+              )?.node;
+
+              const isProductPackaging = metafield
+                ? JSON.parse(metafield.value)
+                : null;
+
+              return {
+                id,
+                price,
+                title,
+                isProductPackaging,
+                productId: variant.product.id,
+              };
+            },
+          });
+        } catch (e) {
+          logger("error", "invalid product id", e);
+          continue;
+        }
+
+        if (!variantProduct) {
+          logger("error", "invalid product id", e);
+          continue;
+        }
+
+        if (variantProduct.isProductPackaging) {
+          // adding the packaging product to the line items
+          if (storeInventory && storeInventory.inventory.length) {
+            const packagingVariant = storeInventory.inventory.find((box) => {
+              return (
+                box.box.toString() === variantProduct.isProductPackaging.box
+              );
+            });
+            if (packagingVariant && packagingVariant.shopify.variantId) {
+              orderLineItems.push({
+                variantId: packagingVariant.shopify.variantId,
+                quantity: quantity,
+              });
+            }
+          }
+          const bundle = await Bundles.findOne({
+            shopifyProductId: variantProduct.isProductPackaging.productId,
+          }).lean();
+          if (!bundle) {
+            logger(
+              "error",
+              "[order-create-event-handler] Invalid product id",
+              e,
+            );
+            continue;
+          }
+          const variant =
+            bundle.metadata.variantMapping[
+              variantProduct.isProductPackaging.variantId
+            ];
+          orderLineItems.push({
+            variantId: variant.id,
+            quantity,
+          });
+        } else {
+          const bundle = await Bundles.findOne({
+            shopifyProductId: variantProduct.productId,
+          }).lean();
+          if (!bundle) {
+            logger(
+              "error",
+              "[order-create-event-handler] Product id is invalid",
+            );
+            return;
+          }
+          const variant = bundle.metadata.variantMapping[variantProduct.id];
+
+          // when lineItem is non packaging
+          orderLineItems.push({
+            variantId: variant.id,
+            quantity,
+          });
+        }
       }
-      try {
-        await executeShopifyQueries({
+      const draftOrderVariables = {
+        input: {
+          lineItems: orderLineItems,
+          email: customer.email,
+          shippingAddress: {
+            address1: shipping_address.address1,
+            city: shipping_address.city,
+            province: shipping_address.province,
+            country: shipping_address.country,
+            zip: shipping_address.zip,
+          },
+          tags: "generated_via_giftclub",
+        },
+      };
+
+      const merchantOrder = await CreateOrder({
+        draftOrderVariables,
+        financial_status: payload.financial_status,
+        store: {
           accessToken: order.accessToken,
           storeUrl: order.storeUrl,
-          query: DRAFT_ORDER_COMPLETE,
-          callback: null,
-          variables: {
-            id: draftOrder.id,
-            paymentPending: payload.financial_status === "paid" ? false : true,
-          },
-        });
-      } catch (e) {
-        logger(
-          "error",
-          "[order-created-event-handler] Could not confirm the draft order",
-          e,
-        );
-      }
-      let merchantOrder;
-      try {
-        merchantOrder = await executeShopifyQueries({
-          accessToken: order.accessToken,
-          storeUrl: order.storeUrl,
-          variables: {
-            draftOrderId: draftOrder.id,
-          },
-          query: GET_ORDER_ID_FROM_DRAFT_ORDER,
-          callback: (result) => {
-            return result.data.draftOrder.order;
-          },
-        });
-        logger("info", "Successfully fetched the merchant order");
-      } catch (e) {
-        logger(
-          "error",
-          "[order-create-event-handler] Could not fetch the merchant order",
-          e,
-        );
-      }
+        },
+      });
 
       logger("info", "Placed the order");
       const merchantOrderObj = new Orders({
@@ -242,7 +263,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
           marketplaceOrderId: payload.admin_graphql_api_id,
         },
       });
-
       const marketplaceOrder = new Orders({
         amount: payload.current_subtotal_price,
         bundles: order.orderBundles,
@@ -257,6 +277,40 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         paymentStatus: payload.financial_status,
         paymentGateways: payload.payment_gateway_names,
       });
+      // const storeInventory  =await
+      // for (const packagingOrder of order.orderBundles) {
+      //   if (packagingOrder.box) {
+      //     // await updateBoxInventoryOnBundles({
+      //     //   accessToken: store.accessToken,
+      //     //   box: packagingOrder.box,
+      //     //   delta: -Number(packagingOrder.quantity),
+      //     //   storeId: order.storeId,
+      //     //   storeUrl: store.storeUrl,
+      //     //   excludedBundleId: packagingOrder.bundle,
+      //     // });
+      //     // logger(
+      //     //   "info",
+      //     //   "Successfully updated the inventory of all the box packagings",
+      //     // );
+      //     await deductInventory({
+      //       boxId: packagingOrder.box,
+      //       delta: Number(packagingOrder.quantity),
+      //       storeId: order.storeId,
+      //     });
+      //     logger(
+      //       "info",
+      //       "successfully updated the box inventory in the database.",
+      //     );
+      //   }
+      //   await Bundles.findByIdAndUpdate(
+      //     packagingOrder.bundle,
+      //     {
+      //       $inc: { inventory: -Number(packagingOrder.quantity) },
+      //     },
+      //     { new: true },
+      //   );
+      //   logger("info", "Successfully updated the bundle inventory");
+      // }
       await Promise.all([marketplaceOrder.save(), merchantOrderObj.save()]);
     }
     logger("info", "Successfully placed the order on merchant and marketplace");
@@ -264,3 +318,5 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     logger("error", `[order-create-event-handler] Error: ${error.message}`);
   }
 }
+
+const PlaceOrderOnShopify = async ({}) => {};

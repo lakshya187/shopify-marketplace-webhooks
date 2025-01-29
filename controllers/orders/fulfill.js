@@ -62,7 +62,7 @@ export default async function OrderFulfillHandler(payload, metadata) {
       fulfillmentOrderId = await executeShopifyQueries({
         accessToken: marketPlace.accessToken,
         callback: (result) => {
-          return result.data.fulfillmentCreate.fulfillment.id;
+          return result.data.order?.fulfillmentOrders?.edges?.[0]?.node?.id;
         },
         query: GET_ORDER_FULFILLMENT_ID,
         storeUrl: marketPlace.storeUrl,

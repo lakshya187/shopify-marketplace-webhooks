@@ -1,0 +1,39 @@
+name: Deploy to AWS Lambda
+
+on:
+  push:
+    branches:
+      - staging # Change to your deployment branch
+
+jobs:
+  deploy:
+    name: Deploy Lambda Function
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 23
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Zip Function Code
+        run: zip -r function.zip . -x "*.git*"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Deploy to AWS Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name dev-shopify-eb-webhook-processor \
+            --zip-file fileb://function.zip
