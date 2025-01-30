@@ -118,11 +118,13 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       // const storeInventory = await StoreBoxes.findOne({
       //   store: order.storeId,
       // }).lean();
+      let orderPrice = 0;
       const orderLineItems = [];
 
       for (const lineItem of order.lineItems) {
         const { variantId, quantity } = lineItem;
         // const variantProduct = await
+
         let variantProduct;
         try {
           variantProduct = await executeShopifyQueries({
@@ -147,7 +149,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
               const isProductPackaging = metafield
                 ? JSON.parse(metafield.value)
                 : null;
-
+              orderPrice += Number(price) || 0;
               return {
                 id,
                 price,
@@ -247,7 +249,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
 
       logger("info", "Placed the order");
       const merchantOrderObj = new Orders({
-        amount: payload.current_subtotal_price,
+        amount: orderPrice,
         bundles: order.orderBundles,
         createdAt: payload.created_at,
         currency: payload.currency,
@@ -264,7 +266,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         },
       });
       const marketplaceOrder = new Orders({
-        amount: payload.current_subtotal_price,
+        amount: orderPrice,
         bundles: order.orderBundles,
         createdAt: payload.created_at,
         currency: payload.currency,
