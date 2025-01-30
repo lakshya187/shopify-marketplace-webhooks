@@ -177,7 +177,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
                 box.box.toString() === variantProduct.isProductPackaging.box
               );
             });
-            if (packagingVariant && packagingVariant.shopify.variantId) {
+            if (packagingVariant && packagingVariant.shopify?.variantId) {
               orderLineItems.push({
                 variantId: packagingVariant.shopify.variantId,
                 quantity: quantity,
