@@ -33,13 +33,13 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     const [doesOrderExists] = await Orders.find({
       orderShopifyId: payload.admin_graphql_api_id,
     }).lean();
-    if (doesOrderExists) {
-      logger(
-        "error",
-        "[order-processing-lambda] Order already exists in the database.",
-      );
-      return;
-    }
+    // if (doesOrderExists) {
+    //   logger(
+    //     "error",
+    //     "[order-processing-lambda] Order already exists in the database.",
+    //   );
+    //   return;
+    // }
     if (!payload?.line_items?.length) {
       logger("error", "No product exists");
       return;
@@ -106,6 +106,8 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       merchantOrderMap[doesBundleExists.store.shopName].lineItems.push({
         variantId: `gid://shopify/ProductVariant/${item.variant_id}`,
         quantity: item.quantity,
+        attributes: item.properties,
+        discount: item.discount_allocations,
       });
     }
     // creating orders for each merchant
@@ -115,9 +117,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       const storeInventory = await StoreBoxes.findOne({
         store: order.storeId,
       }).lean();
-      // const storeInventory = await StoreBoxes.findOne({
-      //   store: order.storeId,
-      // }).lean();
       let orderPrice = 0;
       const orderLineItems = [];
 
@@ -136,26 +135,17 @@ export default async function OrderCreateEventHandler(payload, metadata) {
             },
             callback: (result) => {
               const variant = result.data?.productVariant;
-
+              if (!variant) {
+                return null;
+              }
               // Extracting price
               const { id, price, title } = variant;
-              // Extracting the metafield with namespace "custom" and key "parent_product_details" to check if this is a packaging variant
-              const metafield = variant.product?.metafields?.edges.find(
-                (edge) =>
-                  edge.node.namespace === "custom" &&
-                  edge.node.key === "original_product",
-              )?.node;
 
-              const isProductPackaging = metafield
-                ? JSON.parse(metafield.value)
-                : null;
-              orderPrice += Number(price) || 0;
               return {
                 id,
                 price,
                 title,
-                isProductPackaging,
-                productId: variant.product.id,
+                productId: variant?.product?.id,
               };
             },
           });
@@ -169,41 +159,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
           continue;
         }
 
-        if (variantProduct.isProductPackaging) {
-          // adding the packaging product to the line items
-          if (storeInventory && storeInventory.inventory.length) {
-            const packagingVariant = storeInventory.inventory.find((box) => {
-              return (
-                box.box.toString() === variantProduct.isProductPackaging.box
-              );
-            });
-            if (packagingVariant && packagingVariant.shopify?.variantId) {
-              orderLineItems.push({
-                variantId: packagingVariant.shopify.variantId,
-                quantity: quantity,
-              });
-            }
-          }
-          const bundle = await Bundles.findOne({
-            shopifyProductId: variantProduct.isProductPackaging.productId,
-          }).lean();
-          if (!bundle) {
-            logger(
-              "error",
-              "[order-create-event-handler] Invalid product id",
-              e,
-            );
-            continue;
-          }
-          const variant =
-            bundle.metadata.variantMapping[
-              variantProduct.isProductPackaging.variantId
-            ];
-          orderLineItems.push({
-            variantId: variant.id,
-            quantity,
-          });
-        } else {
+        if (variantProduct) {
           const bundle = await Bundles.findOne({
             shopifyProductId: variantProduct.productId,
           }).lean();
@@ -216,10 +172,39 @@ export default async function OrderCreateEventHandler(payload, metadata) {
           }
           const variant = bundle.metadata.variantMapping[variantProduct.id];
 
+          const isProductPackaging = lineItem.attributes.find(
+            (a) => a.name === "packaging" && a.value === "true",
+          );
+          if (isProductPackaging) {
+            const isStoreInventoryAvailable = storeInventory.inventory.find(
+              (inv) => inv.box.toString() === bundle.box.toString(),
+            );
+            if (
+              isStoreInventoryAvailable &&
+              isStoreInventoryAvailable.shopify
+            ) {
+              orderLineItems.push({
+                variantId: isStoreInventoryAvailable.shopify.variantId,
+                quantity,
+              });
+            }
+          }
+          const discountObj = {};
+          if (lineItem?.discount && lineItem?.discount?.length) {
+            let value = 0;
+            lineItem?.discount.forEach((cunt) => {
+              value += Number(cunt.amount) ?? 0;
+            });
+            discountObj["appliedDiscount"] = {
+              value,
+              valueType: "FIXED_AMOUNT",
+            };
+          }
           // when lineItem is non packaging
           orderLineItems.push({
             variantId: variant.id,
             quantity,
+            ...discountObj,
           });
         }
       }

@@ -1,25 +1,25 @@
 export const ORDER_CREATE_PAYLOAD = {
   version: "0",
-  id: "9bb19753-e05b-7f4c-eeb8-ee9c3b479f5c",
+  id: "f8f59fa9-2dbe-c41c-c261-0ffe2b41156f",
   "detail-type": "shopifyWebhook",
   source: "aws.partner/shopify.com/201184116737/Giftclub_prod-Giftclub",
   account: "442426894654",
-  time: "2025-01-30T11:08:42Z",
+  time: "2025-01-30T13:39:22Z",
   region: "ap-south-1",
   resources: [],
   detail: {
     payload: {
-      id: 6144836862193,
-      admin_graphql_api_id: "gid://shopify/Order/6144836862193",
+      id: 6144923926769,
+      admin_graphql_api_id: "gid://shopify/Order/6144923926769",
       app_id: 212419117057,
       browser_ip: "2401:4900:1c68:b40a:c85:d834:baf7:945d",
       buyer_accepts_marketing: true,
       cancel_reason: null,
       cancelled_at: null,
       cart_token:
-        "Z2NwLWFzaWEtc291dGhlYXN0MTowMUpKVkU3UEVQRzRCUFZQMTlFN0tFM0FSSA",
-      checkout_id: 36350152409329,
-      checkout_token: "9c37fc643852fb789cfe0476c9c0e32c",
+        "Z2NwLWFzaWEtc291dGhlYXN0MTowMUpKVk1YWjgxRTkwMEZLQzBFUVhYSjc1OQ",
+      checkout_id: 36350428905713,
+      checkout_token: "3ea0a526836502442116787324b9c5cc",
       client_details: {
         accept_language: "en-IN",
         browser_height: null,
@@ -27,13 +27,13 @@ export const ORDER_CREATE_PAYLOAD = {
         browser_width: null,
         session_hash: null,
         user_agent:
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1",
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       },
       closed_at: null,
-      confirmation_number: "GY8LFNZL5",
+      confirmation_number: "KDYW09DLH",
       confirmed: true,
       contact_email: "lakshya@giftkart.ai",
-      created_at: "2025-01-30T16:38:39+05:30",
+      created_at: "2025-01-30T19:09:18+05:30",
       currency: "INR",
       current_shipping_price_set: {
         shop_money: {
@@ -45,49 +45,49 @@ export const ORDER_CREATE_PAYLOAD = {
           currency_code: "INR",
         },
       },
-      current_subtotal_price: "2859.00",
+      current_subtotal_price: "370.00",
       current_subtotal_price_set: {
         shop_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
       },
       current_total_additional_fees_set: null,
-      current_total_discounts: "40.00",
+      current_total_discounts: "30.00",
       current_total_discounts_set: {
         shop_money: {
-          amount: "40.00",
+          amount: "30.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "40.00",
+          amount: "30.00",
           currency_code: "INR",
         },
       },
       current_total_duties_set: null,
-      current_total_price: "2859.00",
+      current_total_price: "370.00",
       current_total_price_set: {
         shop_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
       },
-      current_total_tax: "436.12",
+      current_total_tax: "56.44",
       current_total_tax_set: {
         shop_money: {
-          amount: "436.12",
+          amount: "56.44",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "436.12",
+          amount: "56.44",
           currency_code: "INR",
         },
       },
@@ -96,7 +96,7 @@ export const ORDER_CREATE_PAYLOAD = {
       discount_codes: [
         {
           code: "BB69",
-          amount: "40.00",
+          amount: "30.00",
           type: "percentage",
         },
       ],
@@ -110,34 +110,34 @@ export const ORDER_CREATE_PAYLOAD = {
       location_id: null,
       merchant_business_entity_id: "MTcxODAwMzI0MzM3",
       merchant_of_record_app_id: null,
-      name: "#1098",
+      name: "#1100",
       note: null,
       note_attributes: [],
-      number: 98,
-      order_number: 1098,
+      number: 100,
+      order_number: 1100,
       order_status_url:
-        "https://www.giftclub.ai/71800324337/orders/2bf0b4ff1482aae3f61c4705fe05c6d7/authenticate?key=86046a06f25ea83f928028da85849fd7",
+        "https://www.giftclub.ai/71800324337/orders/775e837fee03657b8d4e7a9f49dec0aa/authenticate?key=edd719893af424ae4d6a8fc8a853529f",
       original_total_additional_fees_set: null,
       original_total_duties_set: null,
       payment_gateway_names: ["Cash on Delivery (COD)"],
       phone: null,
       po_number: null,
       presentment_currency: "INR",
-      processed_at: "2025-01-30T16:38:37+05:30",
+      processed_at: "2025-01-30T19:09:15+05:30",
       reference: null,
       referring_site:
         "https://g82qgrn7ycmfg68m-71800324337.shopifypreview.com/",
       source_identifier: null,
       source_name: "212419117057",
       source_url: null,
-      subtotal_price: "2859.00",
+      subtotal_price: "370.00",
       subtotal_price_set: {
         shop_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
       },
@@ -145,16 +145,16 @@ export const ORDER_CREATE_PAYLOAD = {
       tax_exempt: false,
       tax_lines: [
         {
-          price: "436.12",
+          price: "56.44",
           rate: 0.18,
           title: "IGST",
           price_set: {
             shop_money: {
-              amount: "436.12",
+              amount: "56.44",
               currency_code: "INR",
             },
             presentment_money: {
-              amount: "436.12",
+              amount: "56.44",
               currency_code: "INR",
             },
           },
@@ -163,7 +163,7 @@ export const ORDER_CREATE_PAYLOAD = {
       ],
       taxes_included: true,
       test: false,
-      token: "2bf0b4ff1482aae3f61c4705fe05c6d7",
+      token: "775e837fee03657b8d4e7a9f49dec0aa",
       total_cash_rounding_payment_adjustment_set: {
         shop_money: {
           amount: "0.00",
@@ -184,37 +184,37 @@ export const ORDER_CREATE_PAYLOAD = {
           currency_code: "INR",
         },
       },
-      total_discounts: "40.00",
+      total_discounts: "30.00",
       total_discounts_set: {
         shop_money: {
-          amount: "40.00",
+          amount: "30.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "40.00",
+          amount: "30.00",
           currency_code: "INR",
         },
       },
-      total_line_items_price: "2899.00",
+      total_line_items_price: "400.00",
       total_line_items_price_set: {
         shop_money: {
-          amount: "2899.00",
+          amount: "400.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "2899.00",
+          amount: "400.00",
           currency_code: "INR",
         },
       },
-      total_outstanding: "2859.00",
-      total_price: "2859.00",
+      total_outstanding: "370.00",
+      total_price: "370.00",
       total_price_set: {
         shop_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "2859.00",
+          amount: "370.00",
           currency_code: "INR",
         },
       },
@@ -228,20 +228,20 @@ export const ORDER_CREATE_PAYLOAD = {
           currency_code: "INR",
         },
       },
-      total_tax: "436.12",
+      total_tax: "56.44",
       total_tax_set: {
         shop_money: {
-          amount: "436.12",
+          amount: "56.44",
           currency_code: "INR",
         },
         presentment_money: {
-          amount: "436.12",
+          amount: "56.44",
           currency_code: "INR",
         },
       },
       total_tip_received: "0.00",
       total_weight: 0,
-      updated_at: "2025-01-30T16:38:40+05:30",
+      updated_at: "2025-01-30T19:09:19+05:30",
       user_id: null,
       billing_address: {
         first_name: "Lakshya",
@@ -264,7 +264,7 @@ export const ORDER_CREATE_PAYLOAD = {
         id: 7925853880561,
         email: "lakshya@giftkart.ai",
         created_at: "2024-12-21T16:11:48+05:30",
-        updated_at: "2025-01-30T16:38:39+05:30",
+        updated_at: "2025-01-30T19:09:18+05:30",
         first_name: "Lakshya",
         last_name: "",
         state: "enabled",
@@ -322,8 +322,8 @@ export const ORDER_CREATE_PAYLOAD = {
       fulfillments: [],
       line_items: [
         {
-          id: 14695647314161,
-          admin_graphql_api_id: "gid://shopify/LineItem/14695647314161",
+          id: 14695813611761,
+          admin_graphql_api_id: "gid://shopify/LineItem/14695813611761",
           attributed_staffs: [],
           current_quantity: 1,
           fulfillable_quantity: 1,
@@ -331,26 +331,26 @@ export const ORDER_CREATE_PAYLOAD = {
           fulfillment_status: null,
           gift_card: false,
           grams: 0,
-          name: "Give It A Whirl Earrings\n Brass With giftbox - Brass With giftbox",
-          price: "400.00",
+          name: "Medium Box",
+          price: "100.00",
           price_set: {
             shop_money: {
-              amount: "400.00",
+              amount: "100.00",
               currency_code: "INR",
             },
             presentment_money: {
-              amount: "400.00",
+              amount: "100.00",
               currency_code: "INR",
             },
           },
           product_exists: true,
-          product_id: 8740375888113,
+          product_id: 8740388700401,
           properties: [],
           quantity: 1,
           requires_shipping: true,
           sku: "",
           taxable: true,
-          title: "Give It A Whirl Earrings\n Brass With giftbox",
+          title: "Medium Box",
           total_discount: "0.00",
           total_discount_set: {
             shop_money: {
@@ -362,21 +362,87 @@ export const ORDER_CREATE_PAYLOAD = {
               currency_code: "INR",
             },
           },
-          variant_id: 45903203565809,
-          variant_inventory_management: null,
-          variant_title: "Brass With giftbox",
+          variant_id: 45903263695089,
+          variant_inventory_management: "shopify",
+          variant_title: null,
+          vendor: "giftclub",
+          tax_lines: [
+            {
+              channel_liable: false,
+              price: "15.25",
+              price_set: {
+                shop_money: {
+                  amount: "15.25",
+                  currency_code: "INR",
+                },
+                presentment_money: {
+                  amount: "15.25",
+                  currency_code: "INR",
+                },
+              },
+              rate: 0.18,
+              title: "IGST",
+            },
+          ],
+          duties: [],
+          discount_allocations: [],
+        },
+        {
+          id: 14695813644529,
+          admin_graphql_api_id: "gid://shopify/LineItem/14695813644529",
+          attributed_staffs: [],
+          current_quantity: 1,
+          fulfillable_quantity: 1,
+          fulfillment_service: "manual",
+          fulfillment_status: null,
+          gift_card: false,
+          grams: 0,
+          name: "Give It A Whirl Earrings - Brass",
+          price: "300.00",
+          price_set: {
+            shop_money: {
+              amount: "300.00",
+              currency_code: "INR",
+            },
+            presentment_money: {
+              amount: "300.00",
+              currency_code: "INR",
+            },
+          },
+          product_exists: true,
+          product_id: 8740367073521,
+          properties: [],
+          quantity: 1,
+          requires_shipping: true,
+          sku: null,
+          taxable: true,
+          title: "Give It A Whirl Earrings",
+          total_discount: "0.00",
+          total_discount_set: {
+            shop_money: {
+              amount: "0.00",
+              currency_code: "INR",
+            },
+            presentment_money: {
+              amount: "0.00",
+              currency_code: "INR",
+            },
+          },
+          variant_id: 45903172042993,
+          variant_inventory_management: "shopify",
+          variant_title: "Brass",
           vendor: "merchant-prod-2",
           tax_lines: [
             {
               channel_liable: false,
-              price: "54.92",
+              price: "41.19",
               price_set: {
                 shop_money: {
-                  amount: "54.92",
+                  amount: "41.19",
                   currency_code: "INR",
                 },
                 presentment_money: {
-                  amount: "54.92",
+                  amount: "41.19",
                   currency_code: "INR",
                 },
               },
@@ -387,86 +453,20 @@ export const ORDER_CREATE_PAYLOAD = {
           duties: [],
           discount_allocations: [
             {
-              amount: "40.00",
+              amount: "30.00",
               amount_set: {
                 shop_money: {
-                  amount: "40.00",
+                  amount: "30.00",
                   currency_code: "INR",
                 },
                 presentment_money: {
-                  amount: "40.00",
+                  amount: "30.00",
                   currency_code: "INR",
                 },
               },
               discount_application_index: 0,
             },
           ],
-        },
-        {
-          id: 14695647346929,
-          admin_graphql_api_id: "gid://shopify/LineItem/14695647346929",
-          attributed_staffs: [],
-          current_quantity: 1,
-          fulfillable_quantity: 1,
-          fulfillment_service: "manual",
-          fulfillment_status: null,
-          gift_card: false,
-          grams: 0,
-          name: "Snitch & Vanya Bundle - M / XL",
-          price: "2499.00",
-          price_set: {
-            shop_money: {
-              amount: "2499.00",
-              currency_code: "INR",
-            },
-            presentment_money: {
-              amount: "2499.00",
-              currency_code: "INR",
-            },
-          },
-          product_exists: true,
-          product_id: 8740356227313,
-          properties: [],
-          quantity: 1,
-          requires_shipping: true,
-          sku: "",
-          taxable: true,
-          title: "Snitch & Vanya Bundle",
-          total_discount: "0.00",
-          total_discount_set: {
-            shop_money: {
-              amount: "0.00",
-              currency_code: "INR",
-            },
-            presentment_money: {
-              amount: "0.00",
-              currency_code: "INR",
-            },
-          },
-          variant_id: 45903136424177,
-          variant_inventory_management: null,
-          variant_title: "M / XL",
-          vendor: "giftclub-merchant-prod",
-          tax_lines: [
-            {
-              channel_liable: false,
-              price: "381.20",
-              price_set: {
-                shop_money: {
-                  amount: "381.20",
-                  currency_code: "INR",
-                },
-                presentment_money: {
-                  amount: "381.20",
-                  currency_code: "INR",
-                },
-              },
-              rate: 0.18,
-              title: "IGST",
-            },
-          ],
-          duties: [],
-          discount_allocations: [],
         },
       ],
       payment_terms: null,
@@ -490,7 +490,7 @@ export const ORDER_CREATE_PAYLOAD = {
       },
       shipping_lines: [
         {
-          id: 4963948855537,
+          id: 4964022780145,
           carrier_identifier: null,
           code: "Standard",
           current_discounted_price_set: {
@@ -540,13 +540,13 @@ export const ORDER_CREATE_PAYLOAD = {
       "Content-Type": "application/json",
       "X-Shopify-Topic": "orders/create",
       "X-Shopify-Shop-Domain": "cygzgc-jw.myshopify.com",
-      "X-Shopify-Order-Id": "6144836862193",
+      "X-Shopify-Order-Id": "6144923926769",
       "X-Shopify-Test": "false",
-      "X-Shopify-Hmac-SHA256": "dxn3YYHXQshTB8IqHtnCYgXmUEAw5sSGTTS4914BzlE=",
-      "X-Shopify-Webhook-Id": "d5ccd023-951f-4ed2-8f14-e87dbd19fad6",
+      "X-Shopify-Hmac-SHA256": "xQmZ/gL22GkOLFE3vSU4FsYSG87KDtPQaTjM4scakBs=",
+      "X-Shopify-Webhook-Id": "1b715991-5198-4eac-a28f-3b5571c666c9",
       "X-Shopify-API-Version": "2024-10",
-      "X-Shopify-Event-Id": "7c73f611-caff-4744-89c3-07c4cb683401",
-      "X-Shopify-Triggered-At": "2025-01-30T11:08:40.579979360Z",
+      "X-Shopify-Event-Id": "706ae631-3154-4faf-8d35-a3c4f5a533b6",
+      "X-Shopify-Triggered-At": "2025-01-30T13:39:19.697038990Z",
     },
   },
 };
