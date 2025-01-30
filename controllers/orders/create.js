@@ -119,7 +119,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       }).lean();
       let orderPrice = 0;
       const orderLineItems = [];
-
       for (const lineItem of order.lineItems) {
         const { variantId, quantity } = lineItem;
         // const variantProduct = await
@@ -181,6 +180,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
             );
             if (
               isStoreInventoryAvailable &&
+              isStoreInventoryAvailable.remaining &&
               isStoreInventoryAvailable.shopify
             ) {
               orderLineItems.push({

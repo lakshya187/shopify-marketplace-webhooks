@@ -1,25 +1,25 @@
 export const ORDER_CREATE_PAYLOAD = {
   version: "0",
-  id: "f8f59fa9-2dbe-c41c-c261-0ffe2b41156f",
+  id: "9709b3a2-5c01-95d7-2a7c-00db18ae30ad",
   "detail-type": "shopifyWebhook",
   source: "aws.partner/shopify.com/201184116737/Giftclub_prod-Giftclub",
   account: "442426894654",
-  time: "2025-01-30T13:39:22Z",
+  time: "2025-01-30T13:55:19Z",
   region: "ap-south-1",
   resources: [],
   detail: {
     payload: {
-      id: 6144923926769,
-      admin_graphql_api_id: "gid://shopify/Order/6144923926769",
+      id: 6144935461105,
+      admin_graphql_api_id: "gid://shopify/Order/6144935461105",
       app_id: 212419117057,
       browser_ip: "2401:4900:1c68:b40a:c85:d834:baf7:945d",
       buyer_accepts_marketing: true,
       cancel_reason: null,
       cancelled_at: null,
       cart_token:
-        "Z2NwLWFzaWEtc291dGhlYXN0MTowMUpKVk1YWjgxRTkwMEZLQzBFUVhYSjc1OQ",
-      checkout_id: 36350428905713,
-      checkout_token: "3ea0a526836502442116787324b9c5cc",
+        "Z2NwLWFzaWEtc291dGhlYXN0MTowMUpKVlFWUEQ4NVA4UldBNVpCTVdCVjhZNQ",
+      checkout_id: 36350559551729,
+      checkout_token: "e874b5e966382192f0a2d63b47c18f5d",
       client_details: {
         accept_language: "en-IN",
         browser_height: null,
@@ -30,10 +30,10 @@ export const ORDER_CREATE_PAYLOAD = {
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
       },
       closed_at: null,
-      confirmation_number: "KDYW09DLH",
+      confirmation_number: "8KEU41AH8",
       confirmed: true,
       contact_email: "lakshya@giftkart.ai",
-      created_at: "2025-01-30T19:09:18+05:30",
+      created_at: "2025-01-30T19:25:15+05:30",
       currency: "INR",
       current_shipping_price_set: {
         shop_money: {
@@ -110,20 +110,20 @@ export const ORDER_CREATE_PAYLOAD = {
       location_id: null,
       merchant_business_entity_id: "MTcxODAwMzI0MzM3",
       merchant_of_record_app_id: null,
-      name: "#1100",
+      name: "#1101",
       note: null,
       note_attributes: [],
-      number: 100,
-      order_number: 1100,
+      number: 101,
+      order_number: 1101,
       order_status_url:
-        "https://www.giftclub.ai/71800324337/orders/775e837fee03657b8d4e7a9f49dec0aa/authenticate?key=edd719893af424ae4d6a8fc8a853529f",
+        "https://www.giftclub.ai/71800324337/orders/3810a6544bd72f569adae4efc1350ee8/authenticate?key=2c7de7e7afa7b51ebc74b1f92d27cd48",
       original_total_additional_fees_set: null,
       original_total_duties_set: null,
       payment_gateway_names: ["Cash on Delivery (COD)"],
       phone: null,
       po_number: null,
       presentment_currency: "INR",
-      processed_at: "2025-01-30T19:09:15+05:30",
+      processed_at: "2025-01-30T19:25:14+05:30",
       reference: null,
       referring_site:
         "https://g82qgrn7ycmfg68m-71800324337.shopifypreview.com/",
@@ -163,7 +163,7 @@ export const ORDER_CREATE_PAYLOAD = {
       ],
       taxes_included: true,
       test: false,
-      token: "775e837fee03657b8d4e7a9f49dec0aa",
+      token: "3810a6544bd72f569adae4efc1350ee8",
       total_cash_rounding_payment_adjustment_set: {
         shop_money: {
           amount: "0.00",
@@ -241,7 +241,7 @@ export const ORDER_CREATE_PAYLOAD = {
       },
       total_tip_received: "0.00",
       total_weight: 0,
-      updated_at: "2025-01-30T19:09:19+05:30",
+      updated_at: "2025-01-30T19:25:17+05:30",
       user_id: null,
       billing_address: {
         first_name: "Lakshya",
@@ -264,7 +264,7 @@ export const ORDER_CREATE_PAYLOAD = {
         id: 7925853880561,
         email: "lakshya@giftkart.ai",
         created_at: "2024-12-21T16:11:48+05:30",
-        updated_at: "2025-01-30T19:09:18+05:30",
+        updated_at: "2025-01-30T19:25:16+05:30",
         first_name: "Lakshya",
         last_name: "",
         state: "enabled",
@@ -322,8 +322,8 @@ export const ORDER_CREATE_PAYLOAD = {
       fulfillments: [],
       line_items: [
         {
-          id: 14695813611761,
-          admin_graphql_api_id: "gid://shopify/LineItem/14695813611761",
+          id: 14695833829617,
+          admin_graphql_api_id: "gid://shopify/LineItem/14695833829617",
           attributed_staffs: [],
           current_quantity: 1,
           fulfillable_quantity: 1,
@@ -388,8 +388,8 @@ export const ORDER_CREATE_PAYLOAD = {
           discount_allocations: [],
         },
         {
-          id: 14695813644529,
-          admin_graphql_api_id: "gid://shopify/LineItem/14695813644529",
+          id: 14695833862385,
+          admin_graphql_api_id: "gid://shopify/LineItem/14695833862385",
           attributed_staffs: [],
           current_quantity: 1,
           fulfillable_quantity: 1,
@@ -397,7 +397,7 @@ export const ORDER_CREATE_PAYLOAD = {
           fulfillment_status: null,
           gift_card: false,
           grams: 0,
-          name: "Give It A Whirl Earrings - Brass",
+          name: "Give It A Whirl Earrings - Alcantara",
           price: "300.00",
           price_set: {
             shop_money: {
@@ -411,7 +411,12 @@ export const ORDER_CREATE_PAYLOAD = {
           },
           product_exists: true,
           product_id: 8740367073521,
-          properties: [],
+          properties: [
+            {
+              name: "packaging",
+              value: "true",
+            },
+          ],
           quantity: 1,
           requires_shipping: true,
           sku: null,
@@ -428,9 +433,9 @@ export const ORDER_CREATE_PAYLOAD = {
               currency_code: "INR",
             },
           },
-          variant_id: 45903172042993,
+          variant_id: 45903171944689,
           variant_inventory_management: "shopify",
-          variant_title: "Brass",
+          variant_title: "Alcantara",
           vendor: "merchant-prod-2",
           tax_lines: [
             {
@@ -490,7 +495,7 @@ export const ORDER_CREATE_PAYLOAD = {
       },
       shipping_lines: [
         {
-          id: 4964022780145,
+          id: 4964033167601,
           carrier_identifier: null,
           code: "Standard",
           current_discounted_price_set: {
@@ -540,13 +545,13 @@ export const ORDER_CREATE_PAYLOAD = {
       "Content-Type": "application/json",
       "X-Shopify-Topic": "orders/create",
       "X-Shopify-Shop-Domain": "cygzgc-jw.myshopify.com",
-      "X-Shopify-Order-Id": "6144923926769",
+      "X-Shopify-Order-Id": "6144935461105",
       "X-Shopify-Test": "false",
-      "X-Shopify-Hmac-SHA256": "xQmZ/gL22GkOLFE3vSU4FsYSG87KDtPQaTjM4scakBs=",
-      "X-Shopify-Webhook-Id": "1b715991-5198-4eac-a28f-3b5571c666c9",
+      "X-Shopify-Hmac-SHA256": "7qLFOmYATVAXyZ++4RbekQVHTddVllILDUsgB47sbD4=",
+      "X-Shopify-Webhook-Id": "5293f60a-ebf9-4da0-9d7d-47565dcc2eaf",
       "X-Shopify-API-Version": "2024-10",
-      "X-Shopify-Event-Id": "706ae631-3154-4faf-8d35-a3c4f5a533b6",
-      "X-Shopify-Triggered-At": "2025-01-30T13:39:19.697038990Z",
+      "X-Shopify-Event-Id": "1180c83b-1339-4b0c-90c7-220aeded805d",
+      "X-Shopify-Triggered-At": "2025-01-30T13:55:17.282580734Z",
     },
   },
 };
