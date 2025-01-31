@@ -116,7 +116,9 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     for (const order of orderObjs) {
       const storeInventory = await StoreBoxes.findOne({
         store: order.storeId,
-      }).lean();
+      })
+        .populate({ path: "inventory.box" })
+        .lean();
       let orderPrice = 0;
       const orderLineItems = [];
       for (const lineItem of order.lineItems) {
@@ -169,6 +171,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
             );
             return;
           }
+          orderPrice += bundle.price;
           const variant = bundle.metadata.variantMapping[variantProduct.id];
 
           const isProductPackaging = lineItem.attributes.find(
@@ -176,13 +179,14 @@ export default async function OrderCreateEventHandler(payload, metadata) {
           );
           if (isProductPackaging) {
             const isStoreInventoryAvailable = storeInventory.inventory.find(
-              (inv) => inv.box.toString() === bundle.box.toString(),
+              (inv) => inv.box._id.toString() === bundle.box.toString(),
             );
             if (
               isStoreInventoryAvailable &&
               isStoreInventoryAvailable.remaining &&
               isStoreInventoryAvailable.shopify
             ) {
+              orderPrice += Number(isStoreInventoryAvailable.box.price);
               orderLineItems.push({
                 variantId: isStoreInventoryAvailable.shopify.variantId,
                 quantity,
@@ -199,6 +203,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
               value,
               valueType: "FIXED_AMOUNT",
             };
+            orderPrice -= value;
           }
           // when lineItem is non packaging
           orderLineItems.push({

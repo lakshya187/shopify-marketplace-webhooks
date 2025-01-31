@@ -9,7 +9,7 @@ import {
 
 (async () => {
   try {
-    const result = await handler(APP_UNINSTALL);
+    const result = await handler(ORDER_FULFILLED);
     console.log("Lambda Response:", result);
   } catch (error) {
     console.error("Error testing Lambda:", error);
