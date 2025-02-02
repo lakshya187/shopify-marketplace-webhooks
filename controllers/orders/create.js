@@ -4,6 +4,7 @@ import Orders from "#schemas/orders.js";
 import Users from "#schemas/users.js";
 import Boxes from "#schemas/boxes.js";
 import Stores from "#schemas/stores.js";
+import Notifications from "#schemas/notifications.js";
 import StoreBoxes from "#schemas/storeBoxes.js";
 import executeShopifyQueries from "#common-functions/shopify/execute.js";
 import { GET_PRODUCT_USING_VARIANT_ID } from "#common-functions/shopify/queries.js";
@@ -255,6 +256,11 @@ export default async function OrderCreateEventHandler(payload, metadata) {
           marketplaceOrderId: payload.admin_graphql_api_id,
         },
       });
+      const merchantNotification = new Notifications({
+        category: "orders",
+        description: "You have a new order.",
+        store: order.storeId,
+      });
       const marketplaceOrder = new Orders({
         amount: orderPrice,
         bundles: order.orderBundles,
@@ -303,7 +309,11 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       //   );
       //   logger("info", "Successfully updated the bundle inventory");
       // }
-      await Promise.all([marketplaceOrder.save(), merchantOrderObj.save()]);
+      await Promise.all([
+        marketplaceOrder.save(),
+        merchantOrderObj.save(),
+        merchantNotification.save(),
+      ]);
     }
     logger("info", "Successfully placed the order on merchant and marketplace");
   } catch (error) {
