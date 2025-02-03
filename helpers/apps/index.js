@@ -41,21 +41,6 @@ export const DeleteBundles = async ({ bundle, store, marketPlace }) => {
       error,
     );
   }
-
-  try {
-    await Bundles.findByIdAndUpdate(bundle._id, {
-      status: "draft",
-      isDeleted: true,
-      deletedAt: new Date(Date.now()),
-      isCreatedOnShopify: false,
-    });
-  } catch (error) {
-    logger(
-      "error",
-      "[delete-single-bundle] Error updating bundle deletion status",
-      error,
-    );
-  }
 };
 
 export const DeleteCoupon = async ({ coupon, accessToken, storeUrl }) => {

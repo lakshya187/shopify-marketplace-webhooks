@@ -277,40 +277,6 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         paymentStatus: payload.financial_status,
         paymentGateways: payload.payment_gateway_names,
       });
-      // const storeInventory  =await
-      // for (const packagingOrder of order.orderBundles) {
-      //   if (packagingOrder.box) {
-      //     // await updateBoxInventoryOnBundles({
-      //     //   accessToken: store.accessToken,
-      //     //   box: packagingOrder.box,
-      //     //   delta: -Number(packagingOrder.quantity),
-      //     //   storeId: order.storeId,
-      //     //   storeUrl: store.storeUrl,
-      //     //   excludedBundleId: packagingOrder.bundle,
-      //     // });
-      //     // logger(
-      //     //   "info",
-      //     //   "Successfully updated the inventory of all the box packagings",
-      //     // );
-      //     await deductInventory({
-      //       boxId: packagingOrder.box,
-      //       delta: Number(packagingOrder.quantity),
-      //       storeId: order.storeId,
-      //     });
-      //     logger(
-      //       "info",
-      //       "successfully updated the box inventory in the database.",
-      //     );
-      //   }
-      //   await Bundles.findByIdAndUpdate(
-      //     packagingOrder.bundle,
-      //     {
-      //       $inc: { inventory: -Number(packagingOrder.quantity) },
-      //     },
-      //     { new: true },
-      //   );
-      //   logger("info", "Successfully updated the bundle inventory");
-      // }
       await Promise.all([
         marketplaceOrder.save(),
         merchantOrderObj.save(),

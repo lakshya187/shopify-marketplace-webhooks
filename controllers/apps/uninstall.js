@@ -50,18 +50,6 @@ export const AppUninstallEventHandler = async (event) => {
       });
     }
 
-    await Products.deleteMany({
-      store: store._id,
-    });
-
-    await StoreBoxes.deleteMany({
-      store: store._id,
-    });
-
-    await storeBoxOrders.deleteMany({
-      store: store._id,
-    });
-
     await Stores.findByIdAndUpdate(store._id, {
       isActive: false,
     });
