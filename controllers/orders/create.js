@@ -187,7 +187,8 @@ export default async function OrderCreateEventHandler(payload, metadata) {
               isStoreInventoryAvailable.remaining &&
               isStoreInventoryAvailable.shopify
             ) {
-              orderPrice += Number(isStoreInventoryAvailable.box.price);
+              orderPrice +=
+                Number(isStoreInventoryAvailable.box.price) * Number(quantity);
               orderLineItems.push({
                 variantId: isStoreInventoryAvailable.shopify.variantId,
                 quantity,
