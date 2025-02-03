@@ -34,13 +34,13 @@ export default async function OrderCreateEventHandler(payload, metadata) {
     const [doesOrderExists] = await Orders.find({
       orderShopifyId: payload.admin_graphql_api_id,
     }).lean();
-    // if (doesOrderExists) {
-    //   logger(
-    //     "error",
-    //     "[order-processing-lambda] Order already exists in the database.",
-    //   );
-    //   return;
-    // }
+    if (doesOrderExists) {
+      logger(
+        "error",
+        "[order-processing-lambda] Order already exists in the database.",
+      );
+      return;
+    }
     if (!payload?.line_items?.length) {
       logger("error", "No product exists");
       return;
@@ -258,9 +258,11 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       });
       const merchantNotification = new Notifications({
         category: "orders",
-        description: "You have a new order.",
+        description: "A new order from Giftlcub is waiting for you to fulfill!",
         store: order.storeId,
+        title: "You have a new order",
       });
+      logger("info", "successfully created notification for the merchant");
       const marketplaceOrder = new Orders({
         amount: orderPrice,
         bundles: order.orderBundles,
