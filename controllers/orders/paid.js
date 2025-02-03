@@ -60,14 +60,15 @@ export default async function OrderPaidHandler(payload, metadata) {
       "metaData.marketplaceOrderId": marketplaceOrderId,
     }).lean();
     let isOrderCompletelyPaid = false;
-    allIndividualOrders.forEach((order) => {
+    // allIndividualOrders.forEach((order) => {});
+    for (const order of allIndividualOrders) {
       if (order.paymentStatus === "paid") {
         isOrderCompletelyPaid = true;
       } else {
         isOrderCompletelyPaid = false;
+        break;
       }
-    });
-
+    }
     if (isOrderCompletelyPaid) {
       try {
         await executeShopifyQueries({

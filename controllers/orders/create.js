@@ -31,16 +31,16 @@ export default async function OrderCreateEventHandler(payload, metadata) {
       return;
     }
     // check if order exists or not with the shopify_id
-    const [doesOrderExists] = await Orders.find({
-      orderShopifyId: payload.admin_graphql_api_id,
-    }).lean();
-    if (doesOrderExists) {
-      logger(
-        "error",
-        "[order-processing-lambda] Order already exists in the database.",
-      );
-      return;
-    }
+    // const [doesOrderExists] = await Orders.find({
+    //   orderShopifyId: payload.admin_graphql_api_id,
+    // }).lean();
+    // if (doesOrderExists) {
+    //   logger(
+    //     "error",
+    //     "[order-processing-lambda] Order already exists in the database.",
+    //   );
+    //   return;
+    // }
     if (!payload?.line_items?.length) {
       logger("error", "No product exists");
       return;
@@ -204,7 +204,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
               value,
               valueType: "FIXED_AMOUNT",
             };
-            orderPrice -= value;
+            orderPrice -= value / Number(quantity);
           }
           // when lineItem is non packaging
           orderLineItems.push({
