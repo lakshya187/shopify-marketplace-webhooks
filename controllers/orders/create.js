@@ -172,7 +172,7 @@ export default async function OrderCreateEventHandler(payload, metadata) {
             );
             return;
           }
-          orderPrice += bundle.price;
+          orderPrice += bundle.price * Number(quantity);
           const variant = bundle.metadata.variantMapping[variantProduct.id];
 
           const isProductPackaging = lineItem.attributes.find(
@@ -201,10 +201,10 @@ export default async function OrderCreateEventHandler(payload, metadata) {
               value += Number(cunt.amount) ?? 0;
             });
             discountObj["appliedDiscount"] = {
-              value,
+              value: value / Number(quantity),
               valueType: "FIXED_AMOUNT",
             };
-            orderPrice -= value / Number(quantity);
+            orderPrice -= value;
           }
           // when lineItem is non packaging
           orderLineItems.push({

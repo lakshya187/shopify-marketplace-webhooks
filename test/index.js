@@ -10,7 +10,7 @@ import {
 
 (async () => {
   try {
-    const result = await handler(ORDER_PAID);
+    const result = await handler(ORDER_CREATE_PAYLOAD);
     console.log("Lambda Response:", result);
   } catch (error) {
     console.error("Error testing Lambda:", error);
