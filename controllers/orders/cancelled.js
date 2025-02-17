@@ -75,7 +75,7 @@ export const OrderCancelledHandler = async (payload, metadata) => {
       );
       return;
     }
-    const updatedOrder = await Orders.findOneAndUpdate(
+    const updatedMarketplaceOrder = Orders.findOneAndUpdate(
       { _id: marketplaceOrder._id },
       {
         status: "cancelled",
@@ -84,6 +84,15 @@ export const OrderCancelledHandler = async (payload, metadata) => {
       },
       { new: true },
     ).lean();
+    const updatedMerchantOrder = Orders.findOneAndUpdate(
+      { _id: isOrderPresent._id },
+      {
+        status: "cancelled",
+        paymentStatus: "refunded",
+        cancelledOn: new Date(Date.now()),
+      },
+    );
+    await Promise.all([updatedMarketplaceOrder, updatedMerchantOrder]);
     logger("info", "[order-cancelled-handler] Order cancelled successfully");
   } catch (e) {
     logger("error", "[order-cancelled-handler] Error in processing order", e);
