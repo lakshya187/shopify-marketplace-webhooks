@@ -256,6 +256,8 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         metaData: {
           marketplaceOrderId: payload.admin_graphql_api_id,
         },
+        orderStatusUrl: payload.order_status_url ?? "",
+        name: merchantOrder.name,
       });
       const merchantNotification = new Notifications({
         category: "orders",
@@ -277,6 +279,8 @@ export default async function OrderCreateEventHandler(payload, metadata) {
         store: store._id,
         paymentStatus: payload.financial_status,
         paymentGateways: payload.payment_gateway_names,
+        orderStatusUrl: payload.order_status_url ?? "",
+        name: payload.name,
       });
       await Promise.all([
         marketplaceOrder.save(),
