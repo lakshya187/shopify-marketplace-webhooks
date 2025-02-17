@@ -5,6 +5,7 @@ import ProductCreateEventHandler from "#controllers/products/create.js";
 import ProductUpdateEventHandler from "#controllers/products/update.js";
 import OrderPaidEventHandler from "#controllers/orders/paid.js";
 import { AppUninstallEventHandler } from "#controllers/apps/uninstall.js";
+import { OrderCancelledHandler } from "#controllers/orders/cancelled.js";
 
 const EVENT_CONTROLLER_MAPPER = {
   "orders/create": OrderCreateEventHandler,
@@ -13,6 +14,7 @@ const EVENT_CONTROLLER_MAPPER = {
   "products/update": ProductUpdateEventHandler,
   "orders/paid": OrderPaidEventHandler,
   "app/uninstalled": AppUninstallEventHandler,
+  "orders/cancelled": OrderCancelledHandler,
 };
 
 export const handler = async (event) => {
